@@ -4,6 +4,7 @@ import {makeWebInvite,webInviteLink,type WebTheme} from '../lib/web-invite';
 
 export default function WebInvitePanel({event,guest}:{event:Draft;guest:Guest}){
  const [theme,setTheme]=useState<WebTheme>('classic'),[status,setStatus]=useState('');
+ const designs:[WebTheme,string,string][]=[['lily','Калла','Цветочная графика'],['roses','Белые розы','Романтичная классика'],['marsala','Марсала','Бордовые цветы'],['garden','Сад','Зелень и свет'],['night','Вечер','Тёмная зелень'],['classic','Классика','Тёплый беж']];
  const valid=!!event.title.trim()&&!!guest.name.trim()&&/^\d{4}-\d{2}-\d{2}$/.test(event.date)&&/^([01]\d|2[0-3]):[0-5]\d$/.test(event.time);
  const url=valid?webInviteLink(makeWebInvite(event,guest,theme)):'';
  const messages={ru:`${guest.name}, приглашаем вас на ${event.title}! Откройте ваше персональное приглашение:`,ky:`${guest.name}, сизди ${event.title} майрамына чакырабыз! Жеке чакырууңузду ачыңыз:`,uz:`${guest.name}, sizni ${event.title} tadbiriga taklif qilamiz! Shaxsiy taklifnomangizni oching:`,en:`${guest.name}, you are invited to ${event.title}! Open your personal invitation:`};
@@ -14,7 +15,8 @@ export default function WebInvitePanel({event,guest}:{event:Draft;guest:Guest}){
  return <section className="web-panel" aria-label="Интерактивное приглашение">
   <p className="web-panel-eyebrow">ПЕРСОНАЛЬНАЯ ССЫЛКА</p><h3>Приглашение-сайт</h3>
   <p>Гость откроет конверт и увидит страницу с деталями события, картой и обратным отсчётом.</p>
-  <label className="tool-field">Оформление сайта<select value={theme} onChange={e=>{setTheme(e.target.value as WebTheme);setStatus('')}}><option value="classic">Классика · тёплый беж</option><option value="garden">Сад · шалфей</option><option value="night">Вечер · тёмная зелень</option></select></label>
+    <fieldset className="web-design-picker"><legend>Выберите оформление сайта</legend><div className="web-design-grid">{designs.map(([id,name,description])=><button type="button" key={id} className={'web-design-card web-design-'+id} aria-pressed={theme===id} onClick={()=>{setTheme(id);setStatus('')}}><span className="web-design-image" aria-hidden="true"><span>А &amp; Т</span></span><span className="web-design-meta"><strong>{name}</strong><small>{description}</small></span></button>)}</div></fieldset>
+
   <p className="hint">Оформление сайта выбирается отдельно от картинки для печати. Свой фон и настройки карточки на сайт пока не переносятся.</p>
   {url?<>
    <a className="web-preview" href={url} target="_blank" rel="noopener noreferrer">Посмотреть приглашение для {guest.name} ↗</a>
