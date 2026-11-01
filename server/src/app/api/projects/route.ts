@@ -1,0 +1,11 @@
+import { NextResponse } from 'next/server';
+import { randomBytes,createHash,timingSafeEqual } from 'node:crypto';
+import { db } from '@/lib/db';
+import { eventSchema } from '@/lib/model';
+import { checkOrigin,errorResponse } from '@/lib/http';
+export const runtime='nodejs';
+const hash=(v:string)=>createHash('sha256').update(v).digest('hex');
+function authorized(req:Request,expected:string){const token=(req.headers.get('authorization')??'').replace(/^Bearer /,'');if(!token)return false;const a=Buffer.from(hash(token),'hex'),b=Buffer.from(expected,'hex');return a.length===b.length&&timingSafeEqual(a,b);}
+export async function POST(req:Request){try{checkOrigin(req);const event=eventSchema.parse(await req.json());const token=randomBytes(32).toString('base64url');const project=await db.eventProject.create({data:{tokenHash:hash(token),payload:JSON.stringify(event)}});return NextResponse.json({id:project.id,token,revision:project.revision},{headers:{'Cache-Control':'no-store'}});}catch(e){return errorResponse(e);}}
+export async function GET(req:Request){try{const id=new URL(req.url).searchParams.get('id');if(!id)throw new Error('Не указан проект');const p=await db.eventProject.findUnique({where:{id}});if(!p||!authorized(req,p.tokenHash))return NextResponse.json({error:'Нет доступа к проекту'},{status:403});return NextResponse.json({id:p.id,event:JSON.parse(p.payload),revision:p.revision},{headers:{'Cache-Control':'no-store'}});}catch(e){return errorResponse(e);}}
+export async function PUT(req:Request){try{checkOrigin(req);const raw=await req.json();const event=eventSchema.parse(raw.event);const p=await db.eventProject.findUnique({where:{id:String(raw.id)}});if(!p||!authorized(req,p.tokenHash))return NextResponse.json({error:'Нет доступа к проекту'},{status:403});const updated=await db.eventProject.updateMany({where:{id:p.id,revision:Number(raw.revision)},data:{payload:JSON.stringify(event),revision:{increment:1}}});if(!updated.count)return NextResponse.json({error:'Проект изменен в другой вкладке. Сначала откройте сохраненную версию.'},{status:409});return NextResponse.json({id:p.id,revision:p.revision+1},{headers:{'Cache-Control':'no-store'}});}catch(e){return errorResponse(e);}}

@@ -1,0 +1,11 @@
+'use client';
+import {useRef,useState} from 'react';
+import Preview from './Preview';
+import {getZones} from '@/lib/draw';
+import {zoneKeys,allTextKeys,textLabel,type Draft,type Guest,type ZoneKey,type TextKey} from '@/lib/model';
+const labels={title:'Заголовок',guest:'Имя гостя',body:'Текст',details:'Дата и место',host:'Подпись',eyebrow:'Надпись сверху'};
+export default function RepositionEditor({event,guest,onChange,resetZones={}}:{event:Draft;guest:Guest;onChange:(p:Partial<Draft>)=>void;resetZones?:Draft['zones']}){const modal=useRef<HTMLDialogElement>(null),[zone,setZone]=useState<TextKey>('guest'),[error,setError]=useState('');
+ const visible=allTextKeys(event).filter(k=>!event.hiddenBlocks?.includes(k as ZoneKey)),active=visible.includes(zone)?zone:visible[0];
+ function change(key:TextKey,p:Partial<Draft['zones'][ZoneKey]>){if(key.startsWith('extra:'))onChange({extraTexts:event.extraTexts.map(b=>'extra:'+b.id===key?{...b,zone:{...b.zone,...p}}:b)});else onChange({zones:{...event.zones,[key]:{...getZones(event)[key],...p}}});}
+ return <><button type="button" className="secondary full move-open" onClick={()=>modal.current?.showModal()}>Передвинуть текст <span aria-hidden="true">↔</span></button><p className="hint move-hint">Нажмите на текст и переместите его пальцем.</p><dialog ref={modal} className="move-dialog" aria-label="Расположение текста"><div className="move-heading"><div><h2>Расположите текст</h2><p>Тяните блок пальцем. За угол ↘ можно менять его область.</p></div><button className="primary" onClick={()=>modal.current?.close()}>Готово</button></div><div className="move-workspace"><Preview event={event} guest={guest} editing={active} onSelect={setZone} onMove={(x,y,key)=>change(key,{x,y})} onResize={(w,h,key)=>change(key,{w,h})} onError={setError}/></div>{error&&<p className="notice error" role="alert">{error}</p>}<div className="move-blocks" role="group" aria-label="Выбрать текст для перемещения">{visible.map(key=><button type="button" className={active===key?'selected':''} aria-pressed={active===key} key={key} onClick={()=>setZone(key)}>{textLabel(event,key)}</button>)}</div><button type="button" className="plain full" onClick={()=>onChange({zones:resetZones,extraTexts:event.extraTexts.map(b=>({...b,zone:{x:.12,y:.5,w:.76,h:.12}}))})}>Вернуть расположение шаблона</button></dialog></>;
+}

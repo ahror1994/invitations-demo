@@ -1,0 +1,13 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.next/
+data/
+artifacts/
+backups/
+*.db
+*.db-journal
+*.b64
+*.zip
+*.tsbuildinfo

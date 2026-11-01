@@ -1,0 +1,37 @@
+{
+  "name": "toi-invitations",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1",
+    "db:push": "prisma db push",
+    "test": "tsx --test tests/*.test.ts",
+    "postinstall": "prisma generate",
+    "test:browser": "node tests/catalog.mjs",
+    "test:typography": "node tests/typography.mjs",
+    "test:catalog": "node tests/catalog.mjs"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "@prisma/client": "6.19.0",
+    "jszip": "^3.10.1",
+    "next": "^16.0.0",
+    "pdf-lib": "^1.17.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "fontkit": "^2.0.4",
+    "playwright": "^1.64.1",
+    "prisma": "6.19.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

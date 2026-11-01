@@ -1,0 +1,9 @@
+import {NextResponse} from 'next/server';
+import {createCanvas,loadImage} from '@napi-rs/canvas';
+import {randomUUID} from 'node:crypto';
+import {mkdir,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {checkOrigin,errorResponse} from '@/lib/http';
+const uploads:number[]=[];
+export const runtime='nodejs';
+export async function POST(req:Request){try{checkOrigin(req);const now=Date.now();while(uploads.length&&uploads[0]<now-600000)uploads.shift();if(uploads.length>=60)return NextResponse.json({error:'Слишком много загрузок. Попробуйте через несколько минут.'},{status:429});uploads.push(now);if(Number(req.headers.get('content-length')||0)>9*1024*1024)throw new Error('Выберите изображение до 8 МБ');const data=await req.formData();const file=data.get('file');if(!(file instanceof File)||!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>8*1024*1024)throw new Error('Нужен JPG, PNG или WebP до 8 МБ');const bytes=Buffer.from(await file.arrayBuffer());const signature=(bytes[0]===0x89&&bytes.subarray(1,4).toString()==='PNG')||(bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff)||(bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP');if(!signature)throw new Error('Файл должен быть настоящим JPG, PNG или WebP');const image=await loadImage(bytes);if(image.width*image.height>30000000||image.width<100||image.height<100)throw new Error('Размер изображения: от 100×100 до 30 мегапикселей');const scale=Math.min(1,2400/Math.max(image.width,image.height));const canvas=createCanvas(Math.round(image.width*scale),Math.round(image.height*scale));canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);const id=randomUUID();const dir=path.join(process.cwd(),'data/uploads');await mkdir(dir,{recursive:true});await writeFile(path.join(dir,id+'.png'),canvas.toBuffer('image/png'));return NextResponse.json({id,width:canvas.width,height:canvas.height});}catch(e){return errorResponse(e);}}
