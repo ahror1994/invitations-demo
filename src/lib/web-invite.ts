@@ -1,5 +1,6 @@
 import type {Draft,Guest} from './model';
 export type WebTheme='classic'|'garden'|'night'|'lily'|'roses'|'marsala';
+export const webDesigns:[WebTheme,string,string][]=[['lily','Калла','Цветочная графика'],['roses','Белые розы','Романтичная классика'],['marsala','Марсала','Бордовые цветы'],['garden','Сад','Зелень и свет'],['night','Вечер','Тёмная зелень'],['classic','Классика','Тёплый беж']];
 export type WebInvite={v:1;lang?:'ru'|'ky'|'uz'|'en';theme:WebTheme;title:string;guest:string;body:string;date:string;time:string;venue:string;city:string;address:string;host:string};
 export function makeWebInvite(e:Draft,g:Guest,theme:WebTheme):WebInvite{return {v:1,lang:g.language,theme,title:e.title,guest:[g.prefix,g.name,g.suffix].filter(Boolean).join(' '),body:e.bodyByLanguage[g.language]||e.body||'',date:e.date,time:e.time,venue:e.venue,city:e.city,address:e.address,host:e.host};}
 export function encodeInvite(data:WebInvite){const bytes=new TextEncoder().encode(JSON.stringify(data));let binary='';bytes.forEach(b=>binary+=String.fromCharCode(b));return btoa(binary).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
